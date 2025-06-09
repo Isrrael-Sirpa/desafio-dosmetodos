@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ODE Solver – Heun vs RK4</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Fira+Code&display=swap" rel="stylesheet">
+  <style>
+    /* Reset básico */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Roboto', sans-serif; background-color: #f0f2f5; color: #333; }
+    a { text-decoration: none; color: inherit; }
+    ul { list-style: none; }
+
+    /* Navbar */
+    .navbar { background-color: #4a76a8; padding: 1rem; position: sticky; top: 0; z-index: 100; }
+    .navbar .brand { font-size: 1.5rem; font-weight: 500; color: #fff; }
+    .navbar nav { margin-top: 0.5rem; }
+    .navbar nav a { margin-right: 1rem; color: #eee; font-weight: 500; }
+    .navbar nav a:hover { color: #fff; }
+
+    /* Layout contenedor */
+    .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+    .section { background: #fff; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .section h2 { margin-bottom: 0.5rem; color: #4a76a8; }
+    .section p { margin-bottom: 1rem; line-height: 1.5; }
+
+    /* Código */
+    pre { background: #2d2d2d; color: #ccc; padding: 1rem; border-radius: 6px; font-family: 'Fira Code', monospace; overflow-x: auto; }
+    code { font-family: 'Fira Code', monospace; }
+
+    /* Imágenes */
+    .responsive-image { max-width: 100%; height: auto; display: block; margin: 1rem 0; border-radius: 4px; }
+    figure { text-align: center; }
+    figcaption { font-size: 0.9rem; color: #555; }
+
+    /* Formulario calculadora */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .form-grid label { display: block; margin-bottom: 0.3rem; font-weight: 500; }
+    .form-grid input, .form-grid select, .form-grid button { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+    .form-grid button { background-color: #4a76a8; color: #fff; border: none; cursor: pointer; }
+    .form-grid button:hover { background-color: #3b5f86; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.5rem; border: 1px solid #ddd; text-align: right; }
+    th { background-color: #4a76a8; color: #fff; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <div class="container">
+      <span class="brand">EJERCICIOS PARA EC. DIFERENCIALES</span>
+      <nav>
+        <a href="#ej1">Ejercicio 1</a>
+        <a href="#ej2">Ejercicio 2</a>
+        <a href="#ej3">Ejercicio 3</a>
+        <a href="#calc">Calculadora</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Ejercicio 1 -->
+    <section id="ej1" class="section">
+      <h2>Ejercicio 1: Crecimiento logístico</h2>
+      <p>Se resuelve la ecuación <code>dN/dt = k · N · (N<sub>m</sub> - N)</code> describiendo el crecimiento de una población con capacidad limitada.<br>
+         <strong>Explicación:</strong> Primero se calcula la pendiente inicial usando la tasa <em>k</em> y la población actual <em>N</em>. Con Heun, aproximamos la pendiente al final del intervalo y promediamos; con RK4, combinamos cuatro evaluaciones intermedias para mayor precisión.<br>
+         El paso <strong>h</strong> define el intervalo de tiempo para cada aproximación, y <strong>n</strong> el número de pasos para llegar a <strong>t</strong> final.</p>
+      <p><strong>Variables para la calculadora:</strong><br>
+         <code>f(t,y) = 0.000095*y*(5000-y)</code><br>
+         <code>t₀ = 0</code>, <code>y₀ = 100</code>, <code>h = 0.5</code>, <code>n = 40</code></p>
+      <h3>Código Python</h3>
+      <pre><code>def f1(t, N):
+    return 0.000095 * N * (5000 - N)
+
+# Paso h=0.5, t0=0, N0=100, n=40
+t_heun, y_heun = heun(f1, 0, 100, 0.5, 40)
+t_rk4,  y_rk4  = rk4 (f1, 0, 100, 0.5, 40)
+</code></pre>
+      <figure>
+        <img src="logistico.png" alt="Gráfico Crecimiento Logístico" class="responsive-image">
+        <figcaption>Comparación Heun vs RK4</figcaption>
+      </figure>
+    </section>
+
+    <!-- Ejercicio 2 -->
+    <section id="ej2" class="section">
+      <h2>Ejercicio 2: Crecimiento tumoral</h2>
+      <p>Modelo que describe el crecimiento de un tumor según un límite máximo de crecimiento:<br>
+         <code>dA/dt = α · A · (1 - (A/k)<sup>ν</sup>)</code>.<br>
+         <strong>Explicación:</strong> La tasa de cambio depende de la fracción restante hasta la capacidad <em>k</em>, potenciada por <em>ν</em>. Heun promedia pendiente inicial y final, RK4 evalúa cuatro puntos intrastep para más exactitud. Paso <strong>h</strong> y número de iteraciones <strong>n</strong> controlan resolución.</p>
+      <p><strong>Variables para la calculadora:</strong><br>
+         <code>f(t,y) = 0.8*y*(1-(y/60)**0.25)</code><br>
+         <code>t₀ = 0</code>, <code>y₀ = 1</code>, <code>h = 0.5</code>, <code>n = 60</code></p>
+      <h3>Código Python</h3>
+      <pre><code>def f2(t, A):
+    return 0.8 * A * (1 - (A/60)**0.25)
+
+# Paso h=0.5, t0=0, A0=1, n=60
+t_heun, y_heun = heun(f2, 0, 1, 0.5, 60)
+t_rk4,  y_rk4  = rk4 (f2, 0, 1, 0.5, 60)
+</code></pre>
+      <figure>
+        <img src="tumoral.png" alt="Gráfico Crecimiento Tumoral" class="responsive-image">
+        <figcaption>Comparación Heun vs RK4</figcaption>
+      </figure>
+    </section>
+
+    <!-- Ejercicio 3 -->
+    <section id="ej3" class="section">
+      <h2>Ejercicio 3: Velocidad con fricción</h2>
+      <p>Modelo de caída con resistencia: <code>m·dv/dt = -m·g + k·v²</code>.<br>
+         <strong>Explicación:</strong> La aceleración resulta del equilibrio entre la gravedad y la fuerza de fricción proporcional a v². Heun y RK4 aplican el mismo principio de promediar o combinar evaluaciones intermedias. El paso <strong>h</strong> y número de pasos <strong>n</strong> definen la resolución temporal.</p>
+      <p><strong>Variables para la calculadora:</strong><br>
+         <code>f(t,y) = (-5*9.81 + 0.05*y**2)/5</code><br>
+         <code>t₀ = 0</code>, <code>y₀ = 0</code>, <code>h = 0.1</code>, <code>n = 150</code></p>
+      <h3>Código Python</h3>
+      <pre><code>def f3(t, v):
+    return (-5*9.81 + 0.05*v**2) / 5
+
+# Paso h=0.1, t0=0, v0=0, n=150
+t_heun, y_heun = heun(f3, 0, 0, 0.1, 150)
+t_rk4,  y_rk4  = rk4 (f3, 0, 0, 0.1, 150)
+</code></pre>
+      <figure>
+        <img src="friccion.png" alt="Gráfico Velocidad con Fricción" class="responsive-image">
+        <figcaption>Comparación Heun vs RK4</figcaption>
+      </figure>
+    </section>
+
+    <!-- Calculadora -->
+    <section id="calc" class="section">
+      <h2>Calculadora interactiva</h2>
+      <p>Puedes ingresar tu propia función <code>f(t,y)</code>, condiciones iniciales y parámetros, y elegir método.</p>
+      <form class="form-grid" id="odeForm">
+        <div>
+          <label for="expr">f(t, y) =</label>
+          <input type="text" id="expr" placeholder="ej: 0.000095*y*(5000-y)">
+        </div>
+        <div>
+          <label for="t0">t₀</label>
+          <input type="number" id="t0" value="0" step="any">
+        </div>
+        <div>
+          <label for="y0">y₀</label>
+          <input type="number" id="y0" value="1" step="any">
+        </div>
+        <div>
+          <label for="h">h</label>
+          <input type="number" id="h" value="0.1" step="any">
+        </div>
+        <div>
+          <label for="n">Pasos</label>
+          <input type="number" id="n" value="50">
+        </div>
+        <div>
+          <label for="method">Método</label>
+          <select id="method">
+            <option value="heun">Heun</option>
+            <option value="rk4">Runge–Kutta 4</option>
+          </select>
+        </div>
+        <div style="align-self:end;">
+          <button type="button" id="solveBtn">Calcular</button>
+        </div>
+      </form>
+      <table id="resultTable">
+        <thead><tr><th>t</th><th>y</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    // Heun
+    function heunSolver(f,t0,y0,h,n){const t=[t0],y=[y0];for(let i=0;i<n;i++){const k1=f(t[i],y[i]);const yP=y[i]+h*k1;const k2=f(t[i]+h,yP);y.push(y[i]+h*(k1+k2)/2);t.push(t[i]+h);}return {t,y};}
+    // RK4
+    function rk4Solver(f,t0,y0,h,n){const t=[t0],y=[y0];for(let i=0;i<n;i++){const ti=t[i],yi=y[i];const k1=f(ti,yi);const k2=f(ti+h/2,yi+h*k1/2);const k3=f(ti+h/2,yi+h*k2/2);const k4=f(ti+h,yi+h*k3);y.push(yi+h*(k1+2*k2+2*k3+k4)/6);t.push(ti+h);}return {t,y};}
+    document.getElementById('solveBtn').addEventListener('click',()=>{
+      const expr=document.getElementById('expr').value;
+      let f;try{f=new Function('t','y','return '+expr)}catch{alert('Función inválida');return;}
+      const t0=+document.getElementById('t0').value;
+      const y0=+document.getElementById('y0').value;
+      const h =+document.getElementById('h').value;
+      const n =+document.getElementById('n').value;
+      const sol=(document.getElementById('method').value==='heun'?heunSolver:rk4Solver)(f,t0,y0,h,n);
+      const bd=document.querySelector('#resultTable tbody');bd.innerHTML='';sol.t.forEach((tv,i)=>{const tr=document.createElement('tr');const td1=document.createElement('td');td1.textContent=tv.toFixed(4);const td2=document.createElement('td');td2.textContent=sol.y[i].toFixed(6);tr.append(td1,td2);bd.append(tr);});
+    });
+  </script>
+</body>
+</html>
